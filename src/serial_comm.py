@@ -6,7 +6,7 @@ from src.comm import Comm
 
 
 class SerialComm(Comm):
-    def __init__(self, port, baud=250000, timeout=1):
+    def __init__(self, port, baud=256000, timeout=1):
         Comm.__init__(self)
         self.ser = serial.Serial()
 
@@ -18,7 +18,7 @@ class SerialComm(Comm):
         else:
             self.setup(port, baud, timeout)
 
-    def setup(self, port, baud=250000, timeout=1):
+    def setup(self, port, baud=256000, timeout=1):
         self.ser.port = f"COM{port}"
         self.ser.baudrate = baud
         self.ser.timeout = timeout

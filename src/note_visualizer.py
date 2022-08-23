@@ -1,8 +1,12 @@
 import time
+from threading import Thread
 
 
-class NoteVisualizer:
-    def __init__(self):
+class NoteVisualizer(Thread):
+    def __init__(self, ui_style, key_range=("a0", "c8")):
+        Thread.__init__(self)
+        self._alive = True
+
         undef_keys_bottom = ["n/a" for i in range(0, 21)]
         undef_keys_top    = ["n/a" for i in range(109, 128)]
         zero_octave_keys  = ["a0", "a#0", "b0"]
@@ -11,29 +15,54 @@ class NoteVisualizer:
                              for note in ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"]]
 
         self.note_x_midi_map = undef_keys_bottom + zero_octave_keys + standard_keys + top_octave_c + undef_keys_top
+        i_low, i_high = self.note_x_midi_map.index(key_range[0]), self.note_x_midi_map.index(key_range[1])
+        self.note_x_midi_map[:i_low] = ["n/a"] * i_low
+        self.note_x_midi_map[i_high+1:] = ["n/a"] * (127 - i_high)
+
         self.notes = {k: 0 for k in self.note_x_midi_map + ["sustain"]}
 
-        self._init_image()
+        if ui_style == "console":
+            self._show = self._show_console
+        elif ui_style == "gui":
+            self._show = self._show_gui
+        else:
+            raise KeyError("Wrong UI style")
 
-    def loop(self):
-        self._show()
+    def run(self):
+        self._init_image()
+        while self._alive:
+            self._show()
+            time.sleep(0.1)
+
+    def close(self):
+        self._alive = False
 
     def set_notes(self, notes):
         for note, velocity in notes:
             if note == "p":
-                self.notes["pedal"] = 1 if velocity > 0 else 0
+                self.notes["sustain"] = 1 if velocity > 0 else 0
             else:
-                self.notes[note] = velocity
+                self.notes[self.note_x_midi_map[note]] = velocity
 
     def _init_image(self):
         for k in self.notes.keys():
-            print(k, end="\t")
+            if k == "n/a":
+                continue
+            print(k.rjust(3, ' '), end=" ")
         print()
 
-    def _show(self):
-        print()
-        for k in self.notes.keys():
-            print(self.notes[k], end="\t")
+    # overrides _show
+    def _show_console(self):
+        print("\r", end="")
+        # print()
+        for k, n in self.notes.items():
+            if k == "n/a":
+                continue
+            print(str(n).rjust(3, ' '), end=" ")
+
+    # overrides _show
+    def _show_gui(self):
+        raise NotImplementedError
 
 # # Create figure for plotting
 # fig = plt.figure()

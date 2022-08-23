@@ -6,17 +6,17 @@ class Comm:
     def setup(self, *args):
         raise NotImplementedError
 
-    def open(self, *args):
+    def open(self):
         raise NotImplementedError
 
-    def close(self, *args):
+    def close(self):
         raise NotImplementedError
 
-    def is_available(self, *args):
+    def is_available(self):
         raise NotImplementedError
 
-    def number_available(self, *args):
+    def number_available(self):
         raise NotImplementedError
 
-    def read(self, *args):
+    def read(self, number=None):
         raise NotImplementedError

@@ -6,26 +6,34 @@ from src.note_visualizer import NoteVisualizer
 
 
 class CommunicationHandler:
-    def __init__(self, comm: Comm):
-        self.vis = NoteVisualizer()
+    def __init__(self, comm: Comm, ui_style, key_range):
+        self.vis = NoteVisualizer(ui_style, key_range)
         self.comm = comm
         self.byte_handler = ByteHandler()
 
-        self._loop_midi_communication()
+        self.comm.open()
+        self.vis.start()
 
-    def _loop_midi_communication(self):
         try:
-            while True:
-                if self.comm.is_available():
-                    time.sleep(0.1)
-                    notes = self.byte_handler.handle_bytes(self.comm.read())
+            self._run_midi_communication()
+        except KeyboardInterrupt:
+            print("Interrupted, closing down")
+            self._close()
+        except BaseException as exception:
+            self._close()
+            raise exception
 
-                    self.vis.set_notes(notes)
+    def _run_midi_communication(self):
+        while True:
+            if self.comm.is_available():
+                time.sleep(0.1)
+                notes = self.byte_handler.handle_bytes(self.comm.read())
 
-                # debug
-                    self.vis.loop()
-        except IOError as e:
-            print(e)
+                self.vis.set_notes(notes)
+
+    def _close(self):
+        self.comm.close()
+        self.vis.close()
 
 
 class ByteHandler:
@@ -93,7 +101,7 @@ class ByteHandler:
 
 if __name__ == "__main__":
     comm = SerialComm(None)
-    port = input("Select serial port: ")
-    comm.setup(port)
+    port = 8  # input("Select serial port: ")
+    comm.setup(port, 256000)
 
-    CommunicationHandler(comm)
+    CommunicationHandler(comm, "console", ("c2", "c7"))
