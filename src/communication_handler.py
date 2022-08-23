@@ -1,46 +1,24 @@
 import time
-import serial
-import serial.tools.list_ports
 
+from src.comm import Comm
+from src.serial_comm import SerialComm
 from src.note_visualizer import NoteVisualizer
 
 
-class SerialHandler:
-    def __init__(self, port, baud):
+class CommunicationHandler:
+    def __init__(self, comm: Comm):
         self.vis = NoteVisualizer()
-        self.ser = serial.Serial()
+        self.comm = comm
         self.byte_handler = ByteHandler()
 
-        self._open_port(port, baud)
         self._loop_midi_communication()
-        self.ser.close()
-
-    def _open_port(self, port, baud):
-        self.ser.port = f"COM{port}"
-        self.ser.baudrate = baud
-        self.ser.timeout = 1
-        for i in range(1, 11):
-            try:
-                self.ser.open()
-            except serial.SerialException:
-                pass
-
-            if self.ser.is_open:
-                print("Serial port now open:")
-                print(self.ser, "\n")  # print serial parameters
-                break
-            else:
-                print(f"Failed to open serial port at COM{port}. Attempt: {i}/10.")
-                time.sleep(1)
-        else:
-            raise ConnectionError("Failed to open port")
 
     def _loop_midi_communication(self):
         try:
             while True:
-                if self.ser.in_waiting > 0:
+                if self.comm.is_available():
                     time.sleep(0.1)
-                    notes = self.byte_handler.handle_bytes(self.ser.read(self.ser.in_waiting))
+                    notes = self.byte_handler.handle_bytes(self.comm.read())
 
                     self.vis.set_notes(notes)
 
@@ -114,12 +92,8 @@ class ByteHandler:
 
 
 if __name__ == "__main__":
-    ports = serial.tools.list_ports.comports()
-
-    print("COM ports:")
-    for port, desc, hwid in sorted(ports):
-        print("{}: {} [{}]".format(port, desc, hwid))
-
+    comm = SerialComm(None)
     port = input("Select serial port: ")
+    comm.setup(port)
 
-    SerialHandler(port, 256000)
+    CommunicationHandler(comm)
