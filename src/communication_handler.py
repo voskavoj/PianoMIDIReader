@@ -101,7 +101,7 @@ class ByteHandler:
 
 if __name__ == "__main__":
     comm = SerialComm(None)
-    port = 8  # input("Select serial port: ")
+    port = input("Select serial port: ")
     comm.setup(port, 256000)
 
-    CommunicationHandler(comm, "console", ("c2", "c7"))
+    CommunicationHandler(comm, "gui", ("c2", "c7"))
